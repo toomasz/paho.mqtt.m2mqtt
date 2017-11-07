@@ -31,6 +31,9 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using M2Mqtt;
 
 namespace uPLibrary.Networking.M2Mqtt
 {
@@ -229,15 +232,32 @@ namespace uPLibrary.Networking.M2Mqtt
             this.userCertificateSelectionCallback = userCertificateSelectionCallback;
 #endif
         }
+        
 
-        /// <summary>
-        /// Connect to remote server
-        /// </summary>
-        public void Connect()
+        public async Task<M2MqttConnectResultType> Connect(TimeSpan connectTimeout)
         {
+            var tcsTimeout = new CancellationTokenSource(connectTimeout);
+            var tcs = new TaskCompletionSource<bool>();
+            tcsTimeout.Token.Register(() => tcs.TrySetResult(true));
+
             this.socket = new Socket(this.remoteIpAddress.GetAddressFamily(), SocketType.Stream, ProtocolType.Tcp);
+            socket.NoDelay = true;
+            
             // try connection to the broker
-            this.socket.Connect(new IPEndPoint(this.remoteIpAddress, this.remotePort));
+
+
+            var endpointToConnect = new IPEndPoint(remoteIpAddress, remotePort);
+            var asyncResult = socket.BeginConnect(endpointToConnect, ar =>
+            {
+                tcs.TrySetResult(false);
+            }, null);
+
+            var wasConnectTimedOut = await tcs.Task;
+            if (wasConnectTimedOut)
+            {
+                socket.Close(0);
+                return M2MqttConnectResultType.TimeOut;
+            }
 
 #if SSL
             // secure channel requested
@@ -264,10 +284,10 @@ namespace uPLibrary.Networking.M2Mqtt
                 if (this.clientCert != null)
                     clientCertificates = new X509CertificateCollection(new X509Certificate[] { this.clientCert });
 #if (NETSTANDARD1_6 || NETSTANDARD2_0)
-                this.sslStream.AuthenticateAsClientAsync(this.remoteHostName,
+                await sslStream.AuthenticateAsClientAsync(this.remoteHostName,
                     clientCertificates,
                     MqttSslUtility.ToSslPlatformEnum(this.sslProtocol),
-                    false).Wait();
+                    false);
 #else
                 this.sslStream.AuthenticateAsClient(this.remoteHostName,
                     clientCertificates,
@@ -278,6 +298,7 @@ namespace uPLibrary.Networking.M2Mqtt
 #endif
             }
 #endif
+            return M2MqttConnectResultType.Success;
         }
 
         /// <summary>

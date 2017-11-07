@@ -14,6 +14,8 @@ Contributors:
    Paolo Patierno - initial API and implementation and/or initial documentation
 */
 
+using System;
+
 namespace uPLibrary.Networking.M2Mqtt
 {
     /// <summary>
@@ -70,35 +72,19 @@ namespace uPLibrary.Networking.M2Mqtt
         /// Inflight queue size
         /// </summary>
         public int InflightQueueSize { get; set; }
+
+        public TimeSpan ConnectTimeout { get; set; }
         
-        /// <summary>
-        /// Singleton instance of settings
-        /// </summary>
-        public static MqttSettings Instance
+        public MqttSettings()
         {
-            get
-            {
-                if (instance == null)
-                    instance = new MqttSettings();
-                return instance;
-            }
-        }
-
-        // singleton instance
-        private static MqttSettings instance;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        private MqttSettings()
-        {
-            this.Port = MQTT_BROKER_DEFAULT_PORT;
-            this.SslPort = MQTT_BROKER_DEFAULT_SSL_PORT;
-            this.TimeoutOnReceiving = MQTT_DEFAULT_TIMEOUT;
-            this.AttemptsOnRetry = MQTT_ATTEMPTS_RETRY;
-            this.DelayOnRetry = MQTT_DELAY_RETRY;
-            this.TimeoutOnConnection = MQTT_CONNECT_TIMEOUT;
-            this.InflightQueueSize = MQTT_MAX_INFLIGHT_QUEUE_SIZE;
+            Port = MQTT_BROKER_DEFAULT_PORT;
+            SslPort = MQTT_BROKER_DEFAULT_SSL_PORT;
+            TimeoutOnReceiving = MQTT_DEFAULT_TIMEOUT;
+            AttemptsOnRetry = MQTT_ATTEMPTS_RETRY;
+            DelayOnRetry = MQTT_DELAY_RETRY;
+            TimeoutOnConnection = MQTT_CONNECT_TIMEOUT;
+            InflightQueueSize = MQTT_MAX_INFLIGHT_QUEUE_SIZE;
+            ConnectTimeout = TimeSpan.FromSeconds(10);
         }
     }
 }

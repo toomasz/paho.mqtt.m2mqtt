@@ -56,6 +56,8 @@ using System.Collections;
 // (it's ambiguos with uPLibrary.Networking.M2Mqtt.Utility.Trace)
 using MqttUtility = uPLibrary.Networking.M2Mqtt.Utility;
 using System.IO;
+using System.Threading.Tasks;
+using M2Mqtt;
 
 namespace uPLibrary.Networking.M2Mqtt
 {
@@ -244,14 +246,7 @@ namespace uPLibrary.Networking.M2Mqtt
             set { this.session = value; }
         }
 #endif
-
-        /// <summary>
-        /// MQTT client settings
-        /// </summary>
-        public MqttSettings Settings
-        {
-            get { return this.settings; }
-        }
+        
 
 #if !(WINDOWS_APP || WINDOWS_PHONE_APP) 
         /// <summary>
@@ -288,9 +283,9 @@ namespace uPLibrary.Networking.M2Mqtt
         /// Constructor
         /// </summary>
         /// <param name="brokerHostName">Broker Host Name or IP Address</param>
-        public MqttClient(string brokerHostName) :
+        public MqttClient(string brokerHostName, MqttSettings mqttSettings) :
 #if !(WINDOWS_APP || WINDOWS_PHONE_APP)
-            this(brokerHostName, MqttSettings.MQTT_BROKER_DEFAULT_PORT, false, null, null, MqttSslProtocols.None)
+            this(brokerHostName, MqttSettings.MQTT_BROKER_DEFAULT_PORT, false, null, null, MqttSslProtocols.None, null, null, mqttSettings)
 #else
             this(brokerHostName, MqttSettings.MQTT_BROKER_DEFAULT_PORT, false, MqttSslProtocols.None)
 #endif
@@ -307,13 +302,13 @@ namespace uPLibrary.Networking.M2Mqtt
 #if !(WINDOWS_APP || WINDOWS_PHONE_APP)
         /// <param name="caCert">CA certificate for secure connection</param>
         /// <param name="clientCert">Client certificate</param>
-        public MqttClient(string brokerHostName, int brokerPort, bool secure, X509Certificate caCert, X509Certificate clientCert, MqttSslProtocols sslProtocol)            
+        public MqttClient(string brokerHostName, int brokerPort, bool secure, X509Certificate caCert, X509Certificate clientCert, MqttSslProtocols sslProtocol, MqttSettings mqttSettings)            
 #else
         public MqttClient(string brokerHostName, int brokerPort, bool secure, MqttSslProtocols sslProtocol)            
 #endif
         {
 #if !(MF_FRAMEWORK_VERSION_V4_2 || MF_FRAMEWORK_VERSION_V4_3 || COMPACT_FRAMEWORK || WINDOWS_APP || WINDOWS_PHONE_APP)
-            this.Init(brokerHostName, brokerPort, secure, caCert, clientCert, sslProtocol, null, null);
+            this.Init(brokerHostName, brokerPort, secure, caCert, clientCert, sslProtocol, null, null, mqttSettings);
 #elif (WINDOWS_APP || WINDOWS_PHONE_APP)
             this.Init(brokerHostName, brokerPort, secure, sslProtocol);
 #else
@@ -335,43 +330,23 @@ namespace uPLibrary.Networking.M2Mqtt
         /// <param name="sslProtocol">SSL/TLS protocol version</param>
         /// <param name="userCertificateValidationCallback">A RemoteCertificateValidationCallback delegate responsible for validating the certificate supplied by the remote party</param>
         public MqttClient(string brokerHostName, int brokerPort, bool secure, X509Certificate caCert, X509Certificate clientCert, MqttSslProtocols sslProtocol,
-            RemoteCertificateValidationCallback userCertificateValidationCallback)
-            : this(brokerHostName, brokerPort, secure, caCert, clientCert, sslProtocol, userCertificateValidationCallback, null)
+            RemoteCertificateValidationCallback userCertificateValidationCallback, MqttSettings mqttSettings)
+            : this(brokerHostName, brokerPort, secure, caCert, clientCert, sslProtocol, userCertificateValidationCallback, null, mqttSettings)
         {
         }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="brokerHostName">Broker Host Name or IP Address</param>
-        /// <param name="brokerPort">Broker port</param>
-        /// <param name="secure">Using secure connection</param>
-        /// <param name="sslProtocol">SSL/TLS protocol version</param>
-        /// <param name="userCertificateValidationCallback">A RemoteCertificateValidationCallback delegate responsible for validating the certificate supplied by the remote party</param>
-        /// <param name="userCertificateSelectionCallback">A LocalCertificateSelectionCallback delegate responsible for selecting the certificate used for authentication</param>
+        
         public MqttClient(string brokerHostName, int brokerPort, bool secure, MqttSslProtocols sslProtocol, 
             RemoteCertificateValidationCallback userCertificateValidationCallback, 
-            LocalCertificateSelectionCallback userCertificateSelectionCallback)
-            : this(brokerHostName, brokerPort, secure, null, null, sslProtocol, userCertificateValidationCallback, userCertificateSelectionCallback)
+            LocalCertificateSelectionCallback userCertificateSelectionCallback, MqttSettings mqttSettings)
+            : this(brokerHostName, brokerPort, secure, null, null, sslProtocol, userCertificateValidationCallback, userCertificateSelectionCallback, mqttSettings)
         {
         }
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="brokerHostName">Broker Host Name or IP Address</param>
-        /// <param name="brokerPort">Broker port</param>
-        /// <param name="secure">Using secure connection</param>
-        /// <param name="caCert">CA certificate for secure connection</param>
-        /// <param name="clientCert">Client certificate</param>
-        /// <param name="sslProtocol">SSL/TLS protocol version</param>
-        /// <param name="userCertificateValidationCallback">A RemoteCertificateValidationCallback delegate responsible for validating the certificate supplied by the remote party</param>
-        /// <param name="userCertificateSelectionCallback">A LocalCertificateSelectionCallback delegate responsible for selecting the certificate used for authentication</param>
         public MqttClient(string brokerHostName, int brokerPort, bool secure, X509Certificate caCert, X509Certificate clientCert, MqttSslProtocols sslProtocol,
             RemoteCertificateValidationCallback userCertificateValidationCallback,
-            LocalCertificateSelectionCallback userCertificateSelectionCallback)
+            LocalCertificateSelectionCallback userCertificateSelectionCallback, MqttSettings mqttSettings)
         {
-            this.Init(brokerHostName, brokerPort, secure, caCert, clientCert, sslProtocol, userCertificateValidationCallback, userCertificateSelectionCallback);
+            this.Init(brokerHostName, brokerPort, secure, caCert, clientCert, sslProtocol, userCertificateValidationCallback, userCertificateSelectionCallback, mqttSettings);
         }
 #endif
 
@@ -425,7 +400,7 @@ namespace uPLibrary.Networking.M2Mqtt
         /// <param name="userCertificateValidationCallback">A LocalCertificateSelectionCallback delegate responsible for selecting the certificate used for authentication</param>
         private void Init(string brokerHostName, int brokerPort, bool secure, X509Certificate caCert, X509Certificate clientCert, MqttSslProtocols sslProtocol,
             RemoteCertificateValidationCallback userCertificateValidationCallback,
-            LocalCertificateSelectionCallback userCertificateSelectionCallback)
+            LocalCertificateSelectionCallback userCertificateSelectionCallback, MqttSettings mqttSettings = null)
 #elif (WINDOWS_APP || WINDOWS_PHONE_APP)
         private void Init(string brokerHostName, int brokerPort, bool secure, MqttSslProtocols sslProtocol)
 #else
@@ -442,9 +417,8 @@ namespace uPLibrary.Networking.M2Mqtt
 
             this.brokerHostName = brokerHostName;
             this.brokerPort = brokerPort;
-
             // reference to MQTT settings
-            this.settings = MqttSettings.Instance;
+            this.settings = mqttSettings;
             // set settings port based on secure connection or not
             if (!secure)
                 this.settings.Port = this.brokerPort;
@@ -481,9 +455,9 @@ namespace uPLibrary.Networking.M2Mqtt
         /// </summary>
         /// <param name="clientId">Client identifier</param>
         /// <returns>Return code of CONNACK message from broker</returns>
-        public byte Connect(string clientId)
+        public async Task<byte> Connect(string clientId)
         {
-            return this.Connect(clientId, null, null, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, false, null, null, true, MqttMsgConnect.KEEP_ALIVE_PERIOD_DEFAULT);
+            return await this.Connect(clientId, null, null, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, false, null, null, true, MqttMsgConnect.KEEP_ALIVE_PERIOD_DEFAULT);
         }
 
         /// <summary>
@@ -493,11 +467,11 @@ namespace uPLibrary.Networking.M2Mqtt
         /// <param name="username">Username</param>
         /// <param name="password">Password</param>
         /// <returns>Return code of CONNACK message from broker</returns>
-        public byte Connect(string clientId,
+        public async Task<byte> Connect(string clientId,
             string username,
             string password)
         {
-            return this.Connect(clientId, username, password, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, false, null, null, true, MqttMsgConnect.KEEP_ALIVE_PERIOD_DEFAULT);
+            return await this.Connect(clientId, username, password, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, false, null, null, true, MqttMsgConnect.KEEP_ALIVE_PERIOD_DEFAULT);
         }
 
         /// <summary>
@@ -509,13 +483,13 @@ namespace uPLibrary.Networking.M2Mqtt
         /// <param name="cleanSession">Clean sessione flag</param>
         /// <param name="keepAlivePeriod">Keep alive period</param>
         /// <returns>Return code of CONNACK message from broker</returns>
-        public byte Connect(string clientId,
+        public async Task<byte> Connect(string clientId,
             string username,
             string password,
             bool cleanSession,
             ushort keepAlivePeriod)
         {
-            return this.Connect(clientId, username, password, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, false, null, null, cleanSession, keepAlivePeriod);
+            return await this.Connect(clientId, username, password, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, false, null, null, cleanSession, keepAlivePeriod);
         }
 
         /// <summary>
@@ -532,7 +506,7 @@ namespace uPLibrary.Networking.M2Mqtt
         /// <param name="cleanSession">Clean sessione flag</param>
         /// <param name="keepAlivePeriod">Keep alive period</param>
         /// <returns>Return code of CONNACK message from broker</returns>
-        public byte Connect(string clientId,
+        public async Task<byte> Connect(string clientId,
             string username,
             string password,
             bool willRetain,
@@ -544,7 +518,7 @@ namespace uPLibrary.Networking.M2Mqtt
             ushort keepAlivePeriod)
         {
             // create CONNECT message
-            MqttMsgConnect connect = new MqttMsgConnect(clientId,
+            var connect = new MqttMsgConnect(clientId,
                 username,
                 password,
                 willRetain,
@@ -559,7 +533,11 @@ namespace uPLibrary.Networking.M2Mqtt
             try
             {
                 // connect to the broker
-                this.channel.Connect();
+                var result = await channel.Connect(settings.ConnectTimeout);
+                if (result == M2MqttConnectResultType.TimeOut)
+                {
+                    return 6;
+                }
             }
             catch (Exception ex)
             {
